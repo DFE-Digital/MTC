@@ -4,8 +4,10 @@
             <a href="/" title="" id="proposition-name">
                 Multiplication Tables Check
             </a>
-            <% if (isAuthenticated) {%><span id="sign-out">
-                <a href="/sign-out">Sign out</a>
+
+            <% if (isAuthenticated) {%>
+            <span id="sign-out">
+                <a href="/sign-out">Sign out ( <%= user.UserName %> )</a>
             </span>
             <% } %>
         </nav>
