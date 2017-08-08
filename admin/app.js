@@ -195,7 +195,7 @@ app.use(function (req, res, next) {
   res.removeHeader('X-Powered-By')
   next()
 })
-app.use('/sign-in', passport.authenticate('oidc', { successRedirect: '/', failureRedirect: '/auth' }))
+app.use('/oidc-sign-in', passport.authenticate('oidc', { successRedirect: '/', failureRedirect: '/auth' }))
 
 app.use('/auth/cb', passport.authenticate('oidc', { successRedirect: '/', failureRedirect: '/auth' }))
 app.use('/', index)
