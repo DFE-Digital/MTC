@@ -9,7 +9,6 @@ const piping = require('piping')
 const path = require('path')
 // const favicon = require('serve-favicon')
 const logger = require('morgan')
-// const cookieParser = require('cookie-parser')
 const busboy = require('express-busboy')
 const partials = require('express-partials')
 const mongoose = require('mongoose')
@@ -19,6 +18,7 @@ const expressValidator = require('express-validator')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const CustomStrategy = require('passport-custom').Strategy
+const OIDCStrategy = require('openid-client').Strategy
 const session = require('express-session')
 const MongoStore = require('connect-mongo')(session)
 const breadcrumbs = require('express-breadcrumbs')
@@ -77,6 +77,7 @@ app.set('view engine', 'ejs')
 // uncomment after placing your favicon in /public
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
+
 app.use(partials())
 app.use(logger('dev'))
 busboy.extend(app, {
@@ -120,10 +121,41 @@ passport.deserializeUser(function (user, done) {
   done(null, user)
 })
 
+const Issuer = require('openid-client').Issuer
+Issuer.defaultHttpOptions = { timeout: 21500 }
+Issuer.discover('https://alpha.dfenewsecureaccess.org.uk') // => Promise
+  .then((issuer) => {
+    console.log('Discovered issuer %s', JSON.stringify(issuer, null, 4))
+
+    const client = new issuer.Client({
+      client_id: 'mtc',
+      client_secret: 'mtc'
+    }) // => Client
+
+    const params = {
+      // ... any authorization params
+      // client_id defaults to client.client_id
+      redirect_uri: 'http://localhost:3001/auth/cb',
+      // response type defaults to client.response_types[0], then 'code'
+      // scope defaults to 'openid'
+      scope: 'openid email mtc_id',
+      //sessionKey: config.SESSION_SECRET
+    }
+
+    passport.use('oidc', new OIDCStrategy({client, params, sessionKey: config.SESSION_SECRET},
+      require('./authentication/oidc-strategy'))
+    )
+
+// authentication callback
+  })
+
+// start authentication request
+// options [optional], extra authentication parameters
+
 // passport with custom strategy
-passport.use(new CustomStrategy(
-  require('./authentication/nca-tools-authentication-strategy')
-))
+// passport.use(new CustomStrategy(
+//   require('./authentication/nca-tools-authentication-strategy')
+// ))
 
 // Passport with local strategy
 passport.use(
@@ -163,7 +195,9 @@ app.use(function (req, res, next) {
   res.removeHeader('X-Powered-By')
   next()
 })
+app.use('/sign-in', passport.authenticate('oidc', { successRedirect: '/', failureRedirect: '/auth' }))
 
+app.use('/auth/cb', passport.authenticate('oidc', { successRedirect: '/', failureRedirect: '/auth' }))
 app.use('/', index)
 app.use('/test-developer', testDeveloper)
 app.use('/administrator', administrator)
