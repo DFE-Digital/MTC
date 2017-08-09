@@ -1,4 +1,6 @@
 const config = require('../config')
+const passport = require('passport')
+const url = require('url')
 
 const home = (req, res) => {
   if (req.isAuthenticated()) {
@@ -34,11 +36,27 @@ const postSignIn = (req, res) => {
 }
 
 const getSignOut = (req, res) => {
-  req.logout()
-  req.session.regenerate(function () {
-    // session has been regenerated
-    res.redirect('/')
-  })
+  console.log(passport)
+  if (req.user.id_token) {
+    let id_token = req.user.id_token
+    let issuer = passport._strategies['oidc']._issuer
+    const return_url = `${req.protocol}://${req.get('host')}${req.baseUrl}`
+    req.logout()
+    res.redirect(url.format(Object.assign(url.parse(issuer.end_session_endpoint), {
+      search: null,
+      query: {
+        id_token_hint: id_token,
+        post_logout_redirect_uri: return_url
+      }
+    })))
+  } else {
+    req.logout()
+    req.session.regenerate(function () {
+      // session has been regenerated
+
+      res.redirect('/')
+    })
+  }
 }
 
 const getSignInFailure = (req, res) => {

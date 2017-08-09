@@ -129,11 +129,14 @@ Issuer.discover('https://alpha.dfenewsecureaccess.org.uk') // => Promise
 
     const client = new issuer.Client({
       client_id: 'mtc',
-      client_secret: 'mtc'
+      client_secret: 'mtc',
+      post_logout_redirect_uri: 'http://localhost:3001'
     }) // => Client
 
+    client.CLOCK_TOLERANCE = 5
     const params = {
       // ... any authorization params
+
       // client_id defaults to client.client_id
       redirect_uri: 'http://localhost:3001/auth/cb',
       // response type defaults to client.response_types[0], then 'code'
@@ -145,6 +148,7 @@ Issuer.discover('https://alpha.dfenewsecureaccess.org.uk') // => Promise
     passport.use('oidc', new OIDCStrategy({client, params, sessionKey: config.SESSION_SECRET},
       require('./authentication/oidc-strategy'))
     )
+
 
 // authentication callback
   })

@@ -19,7 +19,8 @@ module.exports =  (tokenset, userinfo, done) => {
       UserType: 'SchoolNom',
       School: user.school,
       role: user.role,
-      logonAt: Date.now()
+      logonAt: Date.now(),
+      id_token: tokenset.id_token
     }
     // await saveValidLogonEvent(logonEvent, mock)
     return done(null, mock)
